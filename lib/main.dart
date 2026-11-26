@@ -1,5 +1,6 @@
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -83,6 +84,7 @@ class _SignalsHomePageState extends State<SignalsHomePage>
 
   bool _loading = false;
   bool _disposed = false;
+  int _iosPageIndex = 0;
 
   String _status = 'Waiting for live market data...';
   DateTime? _lastRefresh;
@@ -212,6 +214,37 @@ class _SignalsHomePageState extends State<SignalsHomePage>
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isIOS) {
+      return Scaffold(
+        body: SafeArea(
+          child: IndexedStack(
+            index: _iosPageIndex,
+            children: [
+              _buildMarketSignalsPage(),
+              _buildMorePage(),
+            ],
+          ),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _iosPageIndex,
+          onTap: (index) => setState(() => _iosPageIndex = index),
+          backgroundColor: _surface,
+          selectedItemColor: _brightGold,
+          unselectedItemColor: _muted,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.show_chart_rounded),
+              label: 'MARKET SIGNALS',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_rounded),
+              label: 'MORE',
+            ),
+          ],
+        ),
+      );
+    }
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
@@ -255,6 +288,48 @@ class _SignalsHomePageState extends State<SignalsHomePage>
     );
   }
 
+  Widget _buildMarketSignalsPage() {
+    return RefreshIndicator(
+      onRefresh: refreshAll,
+      color: _gold,
+      backgroundColor: _surface,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 30),
+        children: [
+          _header(),
+          const SizedBox(height: 22),
+          _sectionHeading('MARKET SIGNALS', 'LIVE ANALYSIS'),
+          const SizedBox(height: 12),
+          for (final symbol in _symbols) ...[
+            _signalCard(symbol),
+            const SizedBox(height: 14),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMorePage() {
+    return RefreshIndicator(
+      onRefresh: refreshAll,
+      color: _gold,
+      backgroundColor: _surface,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 30),
+        children: [
+          _header(),
+          const SizedBox(height: 22),
+          _statusCard(),
+          const SizedBox(height: 14),
+          _strategyCard(),
+          const SizedBox(height: 14),
+          _informationCard(),
+        ],
+      ),
+    );
+  }
   Widget _header() {
     return Row(
       children: [
@@ -275,12 +350,12 @@ class _SignalsHomePageState extends State<SignalsHomePage>
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'LELOMUHLE',
+                Platform.isIOS ? 'JAYKIND_SIGNALS' : 'LELOMUHLE',
                 style: TextStyle(
                   color: _brightGold,
                   fontSize: 23,
